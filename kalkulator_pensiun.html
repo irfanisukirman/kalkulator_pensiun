@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalkulator Pensiun PNS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+  <div class="min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-xl bg-white rounded-lg shadow-md p-6">
+      <h1 class="text-2xl font-bold mb-4 text-center">Kalkulator Pensiun PNS</h1>
+
+      <form id="pensionForm" class="space-y-4">
+        <div>
+          <label class="block font-medium">Tanggal Lahir:</label>
+          <input type="date" id="birthDate" class="w-full border p-2 rounded" required />
+        </div>
+
+        <div>
+          <label class="block font-medium">Golongan Terakhir:</label>
+                <select id="rank" class="w-full border p-2 rounded">
+        <option value="I/a">I/a – Juru Muda</option>
+        <option value="I/b">I/b – Juru Muda Tingkat I</option>
+        <option value="I/c">I/c – Juru</option>
+        <option value="I/d">I/d – Juru Tingkat I</option>
+        <option value="II/a">II/a – Pengatur Muda</option>
+        <option value="II/b">II/b – Pengatur Muda Tingkat I</option>
+        <option value="II/c">II/c – Pengatur</option>
+        <option value="II/d">II/d – Pengatur Tingkat I</option>
+        <option value="III/a">III/a – Penata Muda</option>
+        <option value="III/b">III/b – Penata Muda Tingkat I</option>
+        <option value="III/c">III/c – Penata</option>
+        <option value="III/d">III/d – Penata Tingkat I</option>
+        <option value="IV/a">IV/a – Pembina</option>
+        <option value="IV/b">IV/b – Pembina Tingkat I</option>
+        <option value="IV/c">IV/c – Pembina Utama Muda</option>
+        <option value="IV/d">IV/d – Pembina Utama Madya</option>
+        <option value="IV/e">IV/e – Pembina Utama</option>
+      </select>
+        </div>
+
+        <div>
+          <label class="block font-medium">Masa Kerja (tahun):</label>
+          <input type="number" id="yearsOfService" min="0" class="w-full border p-2 rounded" required />
+        </div>
+
+        <div>
+          <label class="block font-medium">Apakah Anda pernah naik jabatan/golongan?</label>
+          <select id="hasPromotion" class="w-full border p-2 rounded">
+            <option value="ya">Ya</option>
+            <option value="tidak">Tidak</option>
+          </select>
+        </div>
+
+        <div id="positionGroup">
+          <label class="block font-medium">Jabatan Terakhir:</label>
+          <select id="position" class="w-full border p-2 rounded">
+            <option value="pelaksana">Pelaksana</option>
+            <option value="fungsional">Fungsional</option>
+            <option value="struktural">Struktural</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-medium">Alasan Pensiun:</label>
+          <select id="reason" class="w-full border p-2 rounded">
+            <option value="bup">Batas Usia Pensiun (BUP)</option>
+            <option value="dini">Pensiun Dini</option>
+            <option value="meninggal">Meninggal Dunia</option>
+            <option value="cacat">Cacat Permanen</option>
+            <option value="phk">PHK / Pelanggaran</option>
+          </select>
+        </div>
+
+        <div class="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 rounded p-3">
+          💡 <strong>Catatan:</strong> Gunakan <u>jabatan dan golongan terakhir</u> Anda sebelum pensiun untuk mendapatkan hasil kalkulasi yang akurat.
+        </div>
+
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">
+          Hitung Pensiun
+        </button>
+      </form>
+
+      <div id="result" class="mt-6 text-sm bg-gray-50 border border-gray-200 rounded p-4 hidden"></div>
+    </div>
+  </div>
+
+  <script>
+    function calculateAge(birthDate) {
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
+    }
+
+    function calculatePensionDate(birthDate, bupAge) {
+      const pensionDate = new Date(birthDate);
+      pensionDate.setFullYear(pensionDate.getFullYear() + bupAge);
+      return pensionDate.toISOString().split("T")[0];
+    }
+
+    document.getElementById("hasPromotion").addEventListener("change", function () {
+      const promotion = this.value;
+      const positionGroup = document.getElementById("positionGroup");
+
+      if (promotion === "tidak") {
+        positionGroup.classList.add("opacity-50");
+        document.getElementById("position").disabled = true;
+      } else {
+        positionGroup.classList.remove("opacity-50");
+        document.getElementById("position").disabled = false;
+      }
+    });
+
+    document.getElementById("pensionForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const birthDate = new Date(document.getElementById("birthDate").value);
+      const reason = document.getElementById("reason").value;
+      const yearsOfService = parseInt(document.getElementById("yearsOfService").value);
+      const hasPromotion = document.getElementById("hasPromotion").value;
+      const position = document.getElementById("position").value;
+  const rank = document.getElementById("rank").value; // ✅ INI DITAMBAHKAN
+      const resultDiv = document.getElementById("result");
+
+      const ageNow = calculateAge(birthDate);
+
+      let bupAge = 58;
+
+      if (hasPromotion === "ya") {
+        if (position === "fungsional" || position === "struktural") {
+          if (rank === "IV/e") {
+            bupAge = 65;
+          } else {
+            bupAge = 60;
+          }
+        } else {
+          bupAge = 58;
+        }
+      } else {
+        bupAge = 58;
+      }
+
+      let message = "";
+
+      if (reason === "bup") {
+        const pensionDate = calculatePensionDate(birthDate, bupAge);
+        message = `✅ Anda akan pensiun karena <strong>BUP</strong> pada usia <strong>${bupAge} tahun</strong>, yaitu pada <strong>${pensionDate}</strong>.`;
+      } else if (reason === "dini") {
+        if (ageNow >= 50 && yearsOfService >= 20) {
+          const pensionDate = new Date().toISOString().split("T")[0];
+          message = `✅ Anda <strong>memenuhi syarat pensiun dini</strong>. Perkiraan tanggal pensiun: <strong>${pensionDate}</strong>.`;
+        } else {
+          message = `❌ Anda <strong>belum memenuhi syarat pensiun dini</strong> (min. usia 50 tahun dan masa kerja 20 tahun).<br>Usia Anda saat ini: <strong>${ageNow} tahun</strong>.`;
+        }
+      } else if (reason === "meninggal") {
+        message = `⚠️ <strong>Pensiun karena meninggal dunia</strong>. Hak pensiun akan diberikan kepada ahli waris.`;
+      } else if (reason === "cacat") {
+        message = `⚠️ <strong>Pensiun karena cacat permanen</strong>. Hak pensiun diberikan sesuai ketentuan ASN.`;
+      } else if (reason === "phk") {
+        message = `⚠️ <strong>PHK / Pelanggaran berat</strong>. Hak pensiun tergantung kasus dan keputusan instansi.`;
+      }
+
+      resultDiv.innerHTML = message;
+      resultDiv.classList.remove("hidden");
+    });
+  </script>
+</body>
+</html>
